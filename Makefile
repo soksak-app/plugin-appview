@@ -8,15 +8,15 @@ node_modules: package.json
 	pnpm install
 	touch node_modules
 
-# soksak-exposure checks the exposed names of the page against plugin.json and the declarations of core.
+# The plugin has no surface and declares no exposure: the shared page names its status, commands and dom entries by the
+# id of the connector plugin that mounts it, which declares them, so soksak-exposure runs in each connector repository.
 # soksak-engines checks that engines.soksak declares the release of that @soksak/plugin-api.
-# soksak-events finds sources without an event or a reason by the census rules of core and compares events.json with
-# the events of the sources.
+# soksak-events finds sources without an event or a reason by the census rules of core; the events of the shared page
+# carry the id of the connector plugin, whose events.json declares them, so this plugin has no event catalog.
 test: node_modules
 	pnpm test
-	pnpm exec soksak-exposure
 	pnpm exec soksak-engines
-	pnpm exec soksak-events --census census.json --catalog events.json
+	pnpm exec soksak-events --census census.json
 	pnpm exec soksak-records
 
 pack:

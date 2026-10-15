@@ -14,4 +14,7 @@
   - [o] P3.1 — P2: 설정 `arguments`는 프로그램의 인자를 문자열의 JSON 배열로 가진다. 다른 값은 그것을 이름하는 오류다.
 - [~] P4 — P2: 연결된 애플리케이션.
   - [o] P4.1 — P2: 설정 `program`의 값 `application:<id>`는 연결 plugin이 연결한 애플리케이션을 core 0.0.15의 `runtime.applications`가 기록한 경로로 시작한다. 연결되지 않은 id는 그것을 이름하는 오류이고, 아무것도 시작하지 않는다.
-  - [ ] P4.2 — P2: core 0.0.15가 게시되면 `engines.soksak`과 core 0.0.15의 `@soksak/plugin-api`로 core 0.0.15를 요구하는 0.0.2를 release한다.
+  - [ ] P4.2 — P2: core 0.0.15가 게시되면 `engines.soksak`과 core 0.0.15의 `@soksak/plugin-api`로 core 0.0.15를 요구하는 0.0.2를 release한다. 이것이 P4.2를 완료한다.
+- [~] P5 — P1: 애플리케이션마다 plugin 하나: 각 연결 plugin은 자기 애플리케이션의 이름과 자기 surface를 가지고, 이 plugin은 자기 surface 대신 extension point `appview.surface`의 공유 module `surface`로 embed page를 준다.
+  - [o] P5.1 — P1: `ui/appview.js`가 `mount(root, context, { application })`을 내보낸다. 그것은 그 id의 연결된 애플리케이션을 연결 plugin composition의 image region `view`에서 시작하고, status, 명령, dom 항목, event는 그 plugin의 id로 이름한다. 설정 `program`, 웹 경로, 문서 region은 없어지고, manifest는 module `surface`, `input`, `events`를 가진 `extends.surface`만 선언한다.
+  - [ ] P5.2 — P1: surface 없는 제공자를 받는 core 0.0.15의 `@soksak/plugin-api`로 0.0.2를 release한다. 이것이 P4.2를 완료한다.

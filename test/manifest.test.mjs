@@ -10,8 +10,8 @@ test("plugin.json satisfies the manifest format", () => {
   assert.equal(validateManifest(manifest), manifest);
 });
 
-test("the package publishes the manifest, the events and every module of the page", () => {
-  for (const file of ["plugin.json", "events.json", manifest.surface.module, "ui/input.js", "ui/events.js"]) {
+test("the package publishes the manifest and every shared module of appview.surface", () => {
+  for (const file of ["plugin.json", ...Object.values(manifest.extends.surface.modules)]) {
     assert.ok(pkg.files.includes(file), file);
     assert.ok(existsSync(new URL(`../${file}`, import.meta.url)), file);
   }

@@ -52,6 +52,6 @@ export function cursor(shape) {
 
 /** Throws unless `message` is an embed input message. */
 export function checkInput(message) {
-  if (!INPUT_TYPES.has(message?.type)) throw new Error(`appview.input: ${String(message?.type)} is not an input message`);
+  if (!INPUT_TYPES.has(message?.type)) throw new Error(`input: ${String(message?.type)} is not an input message`);
   return message;
 }

@@ -2,15 +2,18 @@ import { createEmitter } from "./events.js";
 import { checkInput, cursor, pointer, region as regionMessages, scroll } from "./input.js";
 
 // The view is the element of the image region; the application draws it, so the view has no background of its own.
-const css = `:host{display:block;height:100%;background:transparent;position:relative}#view,#page{position:absolute;inset:0;outline:0}[hidden]{display:none}`;
+const css = `:host{display:block;height:100%;background:transparent;position:relative}#view{position:absolute;inset:0;outline:0}[hidden]{display:none}`;
 
-export async function mount(root, context) {
-  root.innerHTML = `<style>${css}</style><div id="view" data-expose="appview.view" data-command="appview.focus" tabindex="0"></div>` +
-    `<div id="page" data-expose="appview.page" hidden></div>`;
+/**
+ * The embed page of a connector plugin, the shared module `surface` of the extension point `appview.surface`: it starts
+ * the application `application` that the connector plugin connected, from the path that `runtime.applications` records
+ * (docs/spec/plugins.md#connected-applications of core), in the image region `view` of the composition of that plugin.
+ * Its status, commands, dom entries and events carry the id of that plugin, which declares them.
+ */
+export async function mount(root, context, { application }) {
+  const id = context.pluginId;
+  root.innerHTML = `<style>${css}</style><div id="view" data-expose="${id}.view" data-command="${id}.focus" tabindex="0"></div>`;
   const view = root.querySelector("#view");
-  const page = root.querySelector("#page");
-  // The value none of the setting program states that no application is chosen; an http or https address is a web
-  // application, which a document region shows without a sidecar.
   const settings = context.runtime.settings.read();
   // The setting arguments holds the arguments of the program as a JSON array of strings, so a path with spaces keeps
   // its form; another value is an error and starts nothing.
@@ -21,39 +24,33 @@ export async function mount(root, context) {
   } catch {
     // reported below: the value is not JSON
   }
-  // application:<id> names an application that a connector plugin connected; the page starts it from its recorded path
-  // (docs/spec/plugins.md#connected-applications of core). An id that is not connected is an error and starts nothing.
-  const connected = settings.program.startsWith("application:") ? settings.program.slice("application:".length) : null;
-  const record = connected === null ? null : context.runtime.applications.read()[connected] ?? null;
-  const missing = connected !== null && record === null;
-  const chosen = connected === null ? settings.program : record?.path ?? null;
-  const program = settings.program === "none" || args === null || missing ? null : chosen;
-  const web = program !== null && /^https?:\/\//.test(program);
+  // An application that is not connected is an error and starts nothing.
+  const record = context.runtime.applications.read()[application] ?? null;
+  const program = args === null || record === null ? null : record.path;
   // A shown image region holds the composition until its first frame, so only a running application shows it.
-  view.hidden = web || program === null;
-  page.hidden = !web;
+  view.hidden = program === null;
   const sidecar = context.runtime.sidecar();
   // The host finishes the composition only after the first frame of the image region, which the application draws, so
   // the page subscribes to the sidecar and opens the application before it creates the composition; a message that
   // needs the region waits for it.
   let regionReady;
   const imageRegion = new Promise((resolve) => { regionReady = resolve; });
-  const emitEvent = createEmitter(context.runtime, "appview");
+  const emitEvent = createEmitter(context.runtime, id);
   let state = { program, pid: null, toolkit: null, cursor: "default", title: null, exit: null, error: null };
   const watchers = new Set();
   const changed = (fields) => { state = { ...state, ...fields }; watchers.forEach((fn) => fn(state)); };
   const report = (text) => {
     changed({ error: text });
-    emitEvent("warn", "plugin.appview.error", { error: text });
+    emitEvent("warn", `plugin.${id}.error`, { error: text });
     context.status.report("error", new Error(text));
   };
   let inputs = 0;
   const send = (message) => {
-    emitEvent("trace", "plugin.appview.input", { type: message.type });
+    emitEvent("trace", `plugin.${id}.input`, { type: message.type });
     return sidecar.send(context.surfaceId, { operation: "input", message }).catch((error) => report(`input: ${error.message}`));
   };
   await sidecar.on(context.surfaceId, (body) => {
-    emitEvent("debug", "plugin.appview.message", { event: body.event ?? "error" });
+    emitEvent("debug", `plugin.${id}.message`, { event: body.event ?? "error" });
     if (body.error !== undefined) return report(body.error);
     if (body.event === "started") return changed({ pid: body.pid, exit: null });
     if (body.event === "connected") return changed({ toolkit: body.toolkit });
@@ -72,22 +69,21 @@ export async function mount(root, context) {
     if (body.event === "exited") return changed({ exit: body.exit });
     return report(`unknown message of the sidecar ${JSON.stringify(body)}`);
   });
-  if (program !== null && !web) {
-    emitEvent("info", "plugin.appview.open", { program });
+  if (program !== null) {
+    emitEvent("info", `plugin.${id}.open`, { program });
     await sidecar.send(context.surfaceId, { operation: "open", command: [program, ...args] });
   }
-  const composition = await context.composition.create({ regions: { view, page }, overlays: {} });
+  const composition = await context.composition.create({ regions: { view }, overlays: {} });
   const image = composition.region("view");
   regionReady(image);
   await Promise.all([
-    context.exposure.status("appview.state", () => state, (fn) => { watchers.add(fn); return () => watchers.delete(fn); }),
-    context.exposure.command("appview.focus", async () => { await (await imageRegion).focus(); return null; }),
-    context.exposure.command("appview.input", async ({ message }) => { await send(checkInput(message)); return null; }),
-    context.exposure.dom("appview.view", view),
-    context.exposure.dom("appview.page", page),
+    context.exposure.status(`${id}.state`, () => state, (fn) => { watchers.add(fn); return () => watchers.delete(fn); }),
+    context.exposure.command(`${id}.focus`, async () => { await (await imageRegion).focus(); return null; }),
+    context.exposure.command(`${id}.input`, async ({ message }) => { await send(checkInput(message)); return null; }),
+    context.exposure.dom(`${id}.view`, view),
   ]);
   await context.exposure.delegate(root);
-  await context.exposure.bind(view, "appview.focus", () => ({}), { event: "pointerdown" });
+  await context.exposure.bind(view, `${id}.focus`, () => ({}), { event: "pointerdown" });
   const rect = () => view.getBoundingClientRect();
   for (const [type, phase] of [["pointerdown", "down"], ["pointermove", "move"], ["pointerup", "up"]]) {
     view.addEventListener(type, (event) => {
@@ -104,18 +100,9 @@ export async function mount(root, context) {
     report(`the setting arguments is not a JSON array of strings: ${settings.arguments}`);
     return { dispose: () => composition.dispose() };
   }
-  if (missing) {
-    report(`the application ${connected} is not connected`);
+  if (record === null) {
+    report(`the application ${application} is not connected`);
     return { dispose: () => composition.dispose() };
-  }
-  if (program === null) {
-    report("the setting program names no application");
-    return { dispose: () => composition.dispose() };
-  }
-  if (web) {
-    await composition.region("page").load(program);
-    context.status.report("ready");
-    return { dispose: async () => { await composition.dispose(); await context.exposure.dispose(); root.replaceChildren(); } };
   }
   context.status.report("ready");
   return {
