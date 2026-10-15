@@ -11,8 +11,17 @@ export async function mount(root, context) {
   const page = root.querySelector("#page");
   // The value none of the setting program states that no application is chosen; an http or https address is a web
   // application, which a document region shows without a sidecar.
-  const setting = context.runtime.settings.read().program;
-  const program = setting === "none" ? null : setting;
+  const settings = context.runtime.settings.read();
+  // The setting arguments holds the arguments of the program as a JSON array of strings, so a path with spaces keeps
+  // its form; another value is an error and starts nothing.
+  let args = null;
+  try {
+    const parsed = JSON.parse(settings.arguments);
+    if (Array.isArray(parsed) && parsed.every((item) => typeof item === "string")) args = parsed;
+  } catch {
+    // reported below: the value is not JSON
+  }
+  const program = settings.program === "none" || args === null ? null : settings.program;
   const web = program !== null && /^https?:\/\//.test(program);
   // A shown image region holds the composition until its first frame, so only a running application shows it.
   view.hidden = web || program === null;
@@ -59,7 +68,7 @@ export async function mount(root, context) {
   });
   if (program !== null && !web) {
     emitEvent("info", "plugin.appview.open", { program });
-    await sidecar.send(context.surfaceId, { operation: "open", command: [program] });
+    await sidecar.send(context.surfaceId, { operation: "open", command: [program, ...args] });
   }
   const composition = await context.composition.create({ regions: { view, page }, overlays: {} });
   const image = composition.region("view");
@@ -85,6 +94,10 @@ export async function mount(root, context) {
     image.on(type, async (event) => { for (const message of regionMessages(type, event)) await send(message); });
   }
   image.on("error", (event) => report(`native image: ${event.reason}`));
+  if (args === null) {
+    report(`the setting arguments is not a JSON array of strings: ${settings.arguments}`);
+    return { dispose: () => composition.dispose() };
+  }
   if (program === null) {
     report("the setting program names no application");
     return { dispose: () => composition.dispose() };

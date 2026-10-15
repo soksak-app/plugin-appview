@@ -4,7 +4,7 @@ import test from "node:test";
 const LOG = Object.fromEntries(["error", "warn", "info", "debug", "trace"].map((level) => [level, () => {}]));
 
 /** A surface context of this test with a view, an image region and a sidecar that record what the page does. */
-function surface(program) {
+function surface(program, args = "[]") {
   const listeners = new Map();
   const view = {
     style: {},
@@ -30,7 +30,7 @@ function surface(program) {
   const reports = [];
   const context = {
     surfaceId: "s1",
-    runtime: { log: LOG, sidecar: () => sidecar, settings: { read: () => ({ program }), on: () => () => {} } },
+    runtime: { log: LOG, sidecar: () => sidecar, settings: { read: () => ({ program, arguments: args }), on: () => () => {} } },
     composition: { async create() { sent.push("composition.create"); return { region: (name) => (name === "page" ? documentRegion : region), dispose: async () => {} }; } },
     exposure: {
       status: async (name, read, subscribe) => statuses.set(name, { read, subscribe }),
@@ -154,4 +154,19 @@ test("a program that is a path hides the document region", async () => {
   assert.equal(s.page.hidden, true);
   assert.equal(s.view.hidden, false);
   assert.deepEqual(s.loads, []);
+});
+
+test("the arguments of the setting follow the program in the command", async () => {
+  const s = surface("/opt/editor", '["--project", "/tmp/a project"]');
+  const { mount } = await import("../ui/appview.js");
+  await mount(s.root, s.context);
+  assert.deepEqual(s.sent[0], { operation: "open", command: ["/opt/editor", "--project", "/tmp/a project"] });
+});
+
+test("arguments that are not a JSON array of strings are an error and start nothing", async () => {
+  const s = surface("/opt/editor", "--project /tmp");
+  const { mount } = await import("../ui/appview.js");
+  await mount(s.root, s.context);
+  assert.equal(s.sent.some((body) => body.operation === "open"), false);
+  assert.deepEqual(s.reports.at(-1), ["error", "the setting arguments is not a JSON array of strings: --project /tmp"]);
 });

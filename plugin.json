@@ -35,6 +35,13 @@
       "type": "string",
       "default": "none",
       "maxLength": 1024
+    },
+    "arguments": {
+      "label": "실행 인자",
+      "description": "프로그램에 넘길 인자를 문자열의 JSON 배열로 쓴다. 예: [\"--project\", \"/path/to/project\"].",
+      "type": "string",
+      "default": "[]",
+      "maxLength": 4096
     }
   },
   "dependencies": {

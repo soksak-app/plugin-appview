@@ -4,6 +4,7 @@
 
 ## Unreleased
 
+- P3.1: the setting `arguments` holds the arguments of the program as a JSON array of strings, which follow the program in the command, so an application opens a project or a file at its start; a value that is not such an array is an error that names it, and nothing starts. Red: the arguments were not passed and an invalid value was not reported. Green: 12 of 12.
 - P2.3: the page subscribes to the sidecar and opens the application before it creates the composition, and hides the image region when no application is chosen. Input: the host finishes the composition only after the first frame of a shown image region, and the page opened the application only after the composition, so no frame came and the presentation failed after 10 seconds in the gate check. Red: open was not sent before composition.create. Green: 10 of 10.
 - P2.2: `package.json` names its repository, which the workspace registry reads for every release.
 - P2.1: the plugin id is `appview` and the package is `@soksak/plugin-appview`, because the id `app` is a word of the sources of core, whose boundary check refuses a source that names a declared plugin; every command, status, dom entry and event is renamed with it.
