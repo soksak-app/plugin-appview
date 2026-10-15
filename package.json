@@ -1,0 +1,25 @@
+{
+  "name": "@soksak/plugin-app",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.24.0",
+  "description": "Application plugin: shows an application that speaks the embed protocol inside a surface through one image region.",
+  "license": "MIT",
+  "engines": {
+    "soksak": ">=0.0.14"
+  },
+  "files": [
+    "plugin.json",
+    "events.json",
+    "ui/app.js",
+    "ui/input.js",
+    "ui/events.js"
+  ],
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "devDependencies": {
+    "@soksak/plugin-api": "git+https://github.com/soksak-app/core.git#v0.0.14&path:/packages/plugin-api"
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "id": "app",
+  "name": "애플리케이션",
+  "description": "embed protocol을 말하는 애플리케이션을 카드 안에 띄운다. 애플리케이션은 공유 버퍼에 그리고 카드의 입력을 받는다.",
+  "mark": "▣",
+  "icon": "<rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M2 6h12\"/>",
+  "surface": {
+    "module": "ui/app.js",
+    "composition": {
+      "kind": "hybrid",
+      "regions": [
+        {
+          "name": "view",
+          "kind": "image",
+          "sidecar": "@soksak/sidecar-app",
+          "input": "dom"
+        }
+      ],
+      "overlays": []
+    }
+  },
+  "events": "events.json",
+  "preview": {
+    "ink": "--fg"
+  },
+  "settings": {
+    "program": {
+      "label": "실행할 애플리케이션",
+      "description": "none은 애플리케이션을 정하지 않은 상태다. 다른 값은 embed protocol을 말하는 실행 파일의 절대 경로다.",
+      "type": "string",
+      "default": "none",
+      "maxLength": 1024
+    }
+  },
+  "dependencies": {
+    "@soksak/sidecar-app": "^0.0.1"
+  },
+  "exposes": {
+    "status": [
+      {
+        "name": "app.state",
+        "description": "The application of the surface: the program, its process, the toolkit it named when it connected, the cursor it set, its title, its exit, and the last error, each null until it is known.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "program": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "pid": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "toolkit": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "cursor": {
+              "type": "string"
+            },
+            "title": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "exit": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "error": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "commands": [
+      {
+        "name": "app.focus",
+        "description": "Transfers keyboard ownership to the image region of the application.",
+        "params": {
+          "type": "object",
+          "properties": {}
+        },
+        "result": {
+          "type": "null"
+        }
+      },
+      {
+        "name": "app.input",
+        "description": "Sends one input message of the embed protocol (key, compose, commit, pointer, scroll or focus) to the application.",
+        "params": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "object"
+            }
+          }
+        },
+        "result": {
+          "type": "null"
+        }
+      }
+    ],
+    "dom": [
+      {
+        "name": "app.view",
+        "description": "The area that shows the application."
+      }
+    ]
+  }
+}

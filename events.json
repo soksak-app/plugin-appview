@@ -1,0 +1,10 @@
+{
+  "schema": 2,
+  "layers": ["plugin"],
+  "events": {
+    "plugin.app.open": { "layer": "plugin", "class": "lifecycle", "level": "info", "fields": { "program": "string" }, "description": "The surface asks the application sidecar to start the program of its settings." },
+    "plugin.app.input": { "layer": "plugin", "class": "input", "level": "trace", "fields": { "type": "string" }, "description": "The surface sends one input message of the embed protocol to the application; only its type is stored." },
+    "plugin.app.message": { "layer": "plugin", "class": "io", "level": "debug", "fields": { "event": "string" }, "description": "The application sidecar sent a message to the surface; event is its event name, or error." },
+    "plugin.app.error": { "layer": "plugin", "class": "call", "level": "warn", "fields": { "error": "string" }, "description": "The surface reports an error of the application, the sidecar, the host or its settings." }
+  }
+}
