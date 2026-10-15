@@ -31,7 +31,7 @@
   "settings": {
     "program": {
       "label": "실행할 애플리케이션",
-      "description": "none은 애플리케이션을 정하지 않은 상태다. http 또는 https 주소는 웹 애플리케이션으로 카드의 문서 영역에 열고, 다른 값은 embed protocol을 말하는 실행 파일의 절대 경로다.",
+      "description": "none은 애플리케이션을 정하지 않은 상태다. http 또는 https 주소는 웹 애플리케이션으로 카드의 문서 영역에 열고, application:<id>는 연결 plugin이 연결한 애플리케이션을 기록된 경로로 시작하며, 다른 값은 embed protocol을 말하는 실행 파일의 절대 경로다.",
       "type": "string",
       "default": "none",
       "maxLength": 1024

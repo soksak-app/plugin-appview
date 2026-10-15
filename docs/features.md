@@ -12,3 +12,6 @@
   - [o] P2.3 — P1: The page opens the application before it creates the composition, and hides the image region without an application, because the host finishes the composition only after the first frame of a shown image region.
 - [o] P3 — P2: Arguments of the program.
   - [o] P3.1 — P2: The setting `arguments` holds the arguments of the program as a JSON array of strings; another value is an error that names it.
+- [~] P4 — P2: Connected applications.
+  - [o] P4.1 — P2: The setting `program` value `application:<id>` starts the application that a connector plugin connected, from the path that `runtime.applications` of core 0.0.15 records; an id that is not connected is an error that names it, and nothing starts.
+  - [ ] P4.2 — P2: Release 0.0.2 that requires core 0.0.15 through `engines.soksak` and `@soksak/plugin-api` of core 0.0.15 once core 0.0.15 is published.

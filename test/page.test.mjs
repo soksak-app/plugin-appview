@@ -30,7 +30,8 @@ function surface(program, args = "[]") {
   const reports = [];
   const context = {
     surfaceId: "s1",
-    runtime: { log: LOG, sidecar: () => sidecar, settings: { read: () => ({ program, arguments: args }), on: () => () => {} } },
+    runtime: { log: LOG, sidecar: () => sidecar, settings: { read: () => ({ program, arguments: args }), on: () => () => {} },
+      applications: { read: () => ({ sketcher: { version: "1.0.0", path: "/opt/sketcher/bin/sketcher", how: "installed", method: "release" } }), on: () => () => {} } },
     composition: { async create() { sent.push("composition.create"); return { region: (name) => (name === "page" ? documentRegion : region), dispose: async () => {} }; } },
     exposure: {
       status: async (name, read, subscribe) => statuses.set(name, { read, subscribe }),
@@ -169,4 +170,19 @@ test("arguments that are not a JSON array of strings are an error and start noth
   await mount(s.root, s.context);
   assert.equal(s.sent.some((body) => body.operation === "open"), false);
   assert.deepEqual(s.reports.at(-1), ["error", "the setting arguments is not a JSON array of strings: --project /tmp"]);
+});
+
+test("a program application:<id> starts the connected application from its recorded path", async () => {
+  const s = surface("application:sketcher", '["--new"]');
+  const { mount } = await import("../ui/appview.js");
+  await mount(s.root, s.context);
+  assert.deepEqual(s.sent[0], { operation: "open", command: ["/opt/sketcher/bin/sketcher", "--new"] });
+});
+
+test("a program application:<id> that is not connected is an error and starts nothing", async () => {
+  const s = surface("application:painter", "[]");
+  const { mount } = await import("../ui/appview.js");
+  await mount(s.root, s.context);
+  assert.deepEqual(s.sent, ["composition.create"]);
+  assert.deepEqual(s.reports.at(-1), ["error", "the application painter is not connected"]);
 });

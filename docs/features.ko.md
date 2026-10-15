@@ -12,3 +12,6 @@
   - [o] P2.3 — P1: host는 보이는 image region의 첫 frame 뒤에야 composition을 끝내므로, page는 composition을 만들기 전에 애플리케이션을 열고, 애플리케이션이 없으면 image region을 숨긴다.
 - [o] P3 — P2: 프로그램의 인자.
   - [o] P3.1 — P2: 설정 `arguments`는 프로그램의 인자를 문자열의 JSON 배열로 가진다. 다른 값은 그것을 이름하는 오류다.
+- [~] P4 — P2: 연결된 애플리케이션.
+  - [o] P4.1 — P2: 설정 `program`의 값 `application:<id>`는 연결 plugin이 연결한 애플리케이션을 core 0.0.15의 `runtime.applications`가 기록한 경로로 시작한다. 연결되지 않은 id는 그것을 이름하는 오류이고, 아무것도 시작하지 않는다.
+  - [ ] P4.2 — P2: core 0.0.15가 게시되면 `engines.soksak`과 core 0.0.15의 `@soksak/plugin-api`로 core 0.0.15를 요구하는 0.0.2를 release한다.

@@ -21,7 +21,13 @@ export async function mount(root, context) {
   } catch {
     // reported below: the value is not JSON
   }
-  const program = settings.program === "none" || args === null ? null : settings.program;
+  // application:<id> names an application that a connector plugin connected; the page starts it from its recorded path
+  // (docs/spec/plugins.md#connected-applications of core). An id that is not connected is an error and starts nothing.
+  const connected = settings.program.startsWith("application:") ? settings.program.slice("application:".length) : null;
+  const record = connected === null ? null : context.runtime.applications.read()[connected] ?? null;
+  const missing = connected !== null && record === null;
+  const chosen = connected === null ? settings.program : record?.path ?? null;
+  const program = settings.program === "none" || args === null || missing ? null : chosen;
   const web = program !== null && /^https?:\/\//.test(program);
   // A shown image region holds the composition until its first frame, so only a running application shows it.
   view.hidden = web || program === null;
@@ -96,6 +102,10 @@ export async function mount(root, context) {
   image.on("error", (event) => report(`native image: ${event.reason}`));
   if (args === null) {
     report(`the setting arguments is not a JSON array of strings: ${settings.arguments}`);
+    return { dispose: () => composition.dispose() };
+  }
+  if (missing) {
+    report(`the application ${connected} is not connected`);
     return { dispose: () => composition.dispose() };
   }
   if (program === null) {
