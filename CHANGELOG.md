@@ -2,8 +2,9 @@
 
 [한국어](CHANGELOG.ko.md)
 
-## Unreleased
+## 0.0.2
 
+- P5.2: version 0.0.2, which requires core 0.0.15 and provides the shared embed page; it completes P4.2.
 - P6: the release workflow packs the plugin with sok of core 0.0.15 for a tag, and the ci workflow runs the tests and the commit message check. Green: `make pack` made the release of the plugin.
 - P5.1: the page is the shared module `surface` of the extension point `appview.surface`: `mount(root, context, { application })` starts the connected application of that id in the composition of the connector plugin, with names of that plugin; the settings `program`, the web path and the document region are removed, and the plugin has no surface of its own. Red: the manifest check refused a provider without a surface under plugin-api 0.0.14. Green: 10 of 10 with plugin-api 0.0.15; the connector window check of core opened a connector plugin that imports the module on both hosts.
 - P4.1: the setting `program` value `application:<id>` starts the application that a connector plugin connected from the path that `runtime.applications` records; an id that is not connected is an error that names it, and nothing starts. Red: the page sent `application:sketcher` as the program and reported no error for an id that is not connected. Green: 14 of 14.

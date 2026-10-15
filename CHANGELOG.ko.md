@@ -2,8 +2,9 @@
 
 [English](CHANGELOG.md)
 
-## Unreleased
+## 0.0.2
 
+- P5.2: core 0.0.15를 요구하고 공유 embed page를 주는 버전 0.0.2. P4.2를 완료한다.
 - P6: release workflow가 tag마다 core 0.0.15의 sok로 plugin을 묶고, ci workflow가 시험과 commit message 검사를 실행한다. Green: `make pack`이 plugin release를 만들었다.
 - P5.1: page가 extension point `appview.surface`의 공유 module `surface`다. `mount(root, context, { application })`이 그 id의 연결된 애플리케이션을 연결 plugin의 composition에서 그 plugin의 이름으로 시작한다. 설정 `program`, 웹 경로, 문서 region은 없어지고, plugin은 자기 surface를 가지지 않는다. Red: plugin-api 0.0.14에서 manifest 검사가 surface 없는 제공자를 거부했다. Green: plugin-api 0.0.15로 10개 중 10개. core의 연결 창 검사가 두 host에서 그 module을 import하는 연결 plugin을 열었다.
 - P4.1: 설정 `program`의 값 `application:<id>`는 연결 plugin이 연결한 애플리케이션을 `runtime.applications`가 기록한 경로로 시작한다. 연결되지 않은 id는 그것을 이름하는 오류이고 아무것도 시작하지 않는다. Red: page가 `application:sketcher`를 프로그램으로 보냈고, 연결되지 않은 id에 오류를 보고하지 않았다. Green: 14개 중 14개.
