@@ -8,3 +8,4 @@
   - [o] P1.3 — P1: 웹 경로: 웹 주소인 프로그램은 document region에 보이고 sidecar를 시작하지 않는다.
 - [o] P2 — P1: 첫 page 뒤의 수정.
   - [o] P2.1 — P1: plugin id는 core의 어떤 단어와도 겹치지 않는 `appview`이고, 모든 command, status, dom 항목, event가 그것을 쓴다.
+  - [o] P2.2 — P1: workspace registry가 요구하는 저장소를 `package.json`이 이름한다.

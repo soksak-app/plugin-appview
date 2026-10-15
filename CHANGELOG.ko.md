@@ -4,6 +4,7 @@
 
 ## Unreleased
 
+- P2.2: workspace registry가 모든 release에서 읽는 저장소를 `package.json`이 이름한다.
 - P2.1: id `app`은 core 소스의 단어이고 core의 boundary 검사는 선언된 plugin을 이름하는 소스를 거부하므로, plugin id는 `appview`, package는 `@soksak/plugin-appview`다. 모든 command, status, dom 항목, event가 함께 바뀐다.
 - P1.3: http나 https 주소인 프로그램은 카드의 document region `page`에 보이고, image region은 숨으며 sidecar는 시작하지 않는다. 경로인 프로그램은 document region을 숨긴다. Red: page 시험 10개 중 2개가 실패했다. Green: 10개 중 10개.
 - P1.2: page가 설정 `program`의 프로그램을 애플리케이션 sidecar에서 열고, view의 pointer와 wheel event와 image region의 키보드, input method, focus event를 region의 point 단위 embed 입력으로 보내며, 애플리케이션의 cursor, caret, 상태를 반영하고, 없는 프로그램과 sidecar나 host의 모든 오류를 보고한다. Red: 모듈 없이 page 시험이 실패했다. Green: 6개 중 6개.

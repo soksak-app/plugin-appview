@@ -8,3 +8,4 @@
   - [o] P1.3 — P1: The web path: a program that is a web address is shown in a document region, and no sidecar starts.
 - [o] P2 — P1: Corrections after the first page.
   - [o] P2.1 — P1: The plugin id is `appview`, which names no word of core, and every command, status, dom entry and event uses it.
+  - [o] P2.2 — P1: `package.json` names its repository, which the workspace registry requires.
