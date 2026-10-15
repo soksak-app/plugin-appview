@@ -14,11 +14,15 @@ export async function mount(root, context) {
   const setting = context.runtime.settings.read().program;
   const program = setting === "none" ? null : setting;
   const web = program !== null && /^https?:\/\//.test(program);
-  view.hidden = web;
+  // A shown image region holds the composition until its first frame, so only a running application shows it.
+  view.hidden = web || program === null;
   page.hidden = !web;
-  const composition = await context.composition.create({ regions: { view, page }, overlays: {} });
-  const image = composition.region("view");
   const sidecar = context.runtime.sidecar();
+  // The host finishes the composition only after the first frame of the image region, which the application draws, so
+  // the page subscribes to the sidecar and opens the application before it creates the composition; a message that
+  // needs the region waits for it.
+  let regionReady;
+  const imageRegion = new Promise((resolve) => { regionReady = resolve; });
   const emitEvent = createEmitter(context.runtime, "appview");
   let state = { program, pid: null, toolkit: null, cursor: "default", title: null, exit: null, error: null };
   const watchers = new Set();
@@ -33,9 +37,36 @@ export async function mount(root, context) {
     emitEvent("trace", "plugin.appview.input", { type: message.type });
     return sidecar.send(context.surfaceId, { operation: "input", message }).catch((error) => report(`input: ${error.message}`));
   };
+  await sidecar.on(context.surfaceId, (body) => {
+    emitEvent("debug", "plugin.appview.message", { event: body.event ?? "error" });
+    if (body.error !== undefined) return report(body.error);
+    if (body.event === "started") return changed({ pid: body.pid, exit: null });
+    if (body.event === "connected") return changed({ toolkit: body.toolkit });
+    if (body.event === "cursor") {
+      try {
+        view.style.cursor = cursor(body.shape);
+        return changed({ cursor: body.shape });
+      } catch (error) {
+        return report(error.message);
+      }
+    }
+    if (body.event === "caret") {
+      return imageRegion.then((image) => image.setCaret({ x: body.x, y: body.y, width: body.width, height: body.height })).catch((error) => report(`caret: ${error.message}`));
+    }
+    if (body.event === "state") return changed({ title: body.title });
+    if (body.event === "exited") return changed({ exit: body.exit });
+    return report(`unknown message of the sidecar ${JSON.stringify(body)}`);
+  });
+  if (program !== null && !web) {
+    emitEvent("info", "plugin.appview.open", { program });
+    await sidecar.send(context.surfaceId, { operation: "open", command: [program] });
+  }
+  const composition = await context.composition.create({ regions: { view, page }, overlays: {} });
+  const image = composition.region("view");
+  regionReady(image);
   await Promise.all([
     context.exposure.status("appview.state", () => state, (fn) => { watchers.add(fn); return () => watchers.delete(fn); }),
-    context.exposure.command("appview.focus", async () => { await image.focus(); return null; }),
+    context.exposure.command("appview.focus", async () => { await (await imageRegion).focus(); return null; }),
     context.exposure.command("appview.input", async ({ message }) => { await send(checkInput(message)); return null; }),
     context.exposure.dom("appview.view", view),
     context.exposure.dom("appview.page", page),
@@ -54,37 +85,15 @@ export async function mount(root, context) {
     image.on(type, async (event) => { for (const message of regionMessages(type, event)) await send(message); });
   }
   image.on("error", (event) => report(`native image: ${event.reason}`));
-  await sidecar.on(context.surfaceId, (body) => {
-    emitEvent("debug", "plugin.appview.message", { event: body.event ?? "error" });
-    if (body.error !== undefined) return report(body.error);
-    if (body.event === "started") return changed({ pid: body.pid, exit: null });
-    if (body.event === "connected") return changed({ toolkit: body.toolkit });
-    if (body.event === "cursor") {
-      try {
-        view.style.cursor = cursor(body.shape);
-        return changed({ cursor: body.shape });
-      } catch (error) {
-        return report(error.message);
-      }
-    }
-    if (body.event === "caret") {
-      return image.setCaret({ x: body.x, y: body.y, width: body.width, height: body.height }).catch((error) => report(`caret: ${error.message}`));
-    }
-    if (body.event === "state") return changed({ title: body.title });
-    if (body.event === "exited") return changed({ exit: body.exit });
-    return report(`unknown message of the sidecar ${JSON.stringify(body)}`);
-  });
   if (program === null) {
     report("the setting program names no application");
     return { dispose: () => composition.dispose() };
   }
-  emitEvent("info", "plugin.appview.open", { program });
   if (web) {
     await composition.region("page").load(program);
     context.status.report("ready");
     return { dispose: async () => { await composition.dispose(); await context.exposure.dispose(); root.replaceChildren(); } };
   }
-  await sidecar.send(context.surfaceId, { operation: "open", command: [program] });
   context.status.report("ready");
   return {
     focus: () => image.focus(),

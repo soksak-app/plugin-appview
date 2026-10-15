@@ -31,7 +31,7 @@ function surface(program) {
   const context = {
     surfaceId: "s1",
     runtime: { log: LOG, sidecar: () => sidecar, settings: { read: () => ({ program }), on: () => () => {} } },
-    composition: { async create() { return { region: (name) => (name === "page" ? documentRegion : region), dispose: async () => {} }; } },
+    composition: { async create() { sent.push("composition.create"); return { region: (name) => (name === "page" ? documentRegion : region), dispose: async () => {} }; } },
     exposure: {
       status: async (name, read, subscribe) => statuses.set(name, { read, subscribe }),
       command: async (name, fn) => commands.set(name, fn), dom: async () => {}, bind: async () => {}, delegate: async () => {},
@@ -54,7 +54,9 @@ test("the page opens the program of its settings and reports ready", async () =>
   const s = surface("/opt/editor");
   const { mount } = await import("../ui/appview.js");
   await mount(s.root, s.context);
-  assert.deepEqual(s.sent, [{ operation: "open", command: ["/opt/editor"] }]);
+  // The host finishes the composition only after the first frame of the image region, which the application draws, so the
+  // page opens the application before it creates the composition.
+  assert.deepEqual(s.sent.slice(0, 2), [{ operation: "open", command: ["/opt/editor"] }, "composition.create"]);
   assert.deepEqual(s.reports, [["ready", undefined]]);
   assert.equal(s.statuses.get("appview.state").read().program, "/opt/editor");
 });
@@ -63,8 +65,9 @@ test("a page without a program reports the missing setting as an error", async (
   const s = surface("none");
   const { mount } = await import("../ui/appview.js");
   await mount(s.root, s.context);
-  assert.deepEqual(s.sent, []);
+  assert.deepEqual(s.sent, ["composition.create"]);
   assert.deepEqual(s.reports, [["error", "the setting program names no application"]]);
+  assert.equal(s.view.hidden, true, "a shown image region without an application would hold the composition");
 });
 
 test("pointer and wheel events of the view become embed input in points of the region", async () => {
@@ -76,7 +79,7 @@ test("pointer and wheel events of the view become embed input in points of the r
   s.fire("pointerup", { clientX: 41, clientY: 72, button: 0, buttons: 0, pointerId: 1, shiftKey: false, altKey: false, ctrlKey: false, metaKey: false });
   s.fire("wheel", { clientX: 50, clientY: 60, deltaX: 0, deltaY: -12, deltaMode: 0 });
   await settle();
-  const messages = s.sent.slice(1).map((body) => body.message);
+  const messages = s.sent.filter((body) => body.operation === "input").map((body) => body.message);
   assert.deepEqual(messages[0], { type: "pointer", phase: "down", x: 30, y: 50, button: "left", buttons: ["left"], shift: true, alt: false, ctrl: false, meta: false, input: 1 });
   assert.deepEqual(messages[1], { type: "pointer", phase: "move", x: 31, y: 52, buttons: ["left"], shift: false, alt: false, ctrl: false, meta: false, input: 2 });
   assert.equal(messages[2].phase, "up");
@@ -93,7 +96,7 @@ test("region keyboard events become embed key, commit, compose and focus message
   await s.region("insert", { text: "한" });
   await s.region("compose", { text: "ㅎ", caret: 1 });
   await s.region("focus", { focused: true });
-  const messages = s.sent.slice(1).map((body) => body.message);
+  const messages = s.sent.filter((body) => body.operation === "input").map((body) => body.message);
   const key = { type: "key", key: "ArrowLeft", shift: false, alt: true, ctrl: false, meta: false, repeat: false };
   assert.deepEqual(messages, [
     { ...key, down: true }, { ...key, down: false },
@@ -137,7 +140,7 @@ test("a program that is a web address is shown in the document region and starts
   const s = surface("https://example.test/editor");
   const { mount } = await import("../ui/appview.js");
   await mount(s.root, s.context);
-  assert.deepEqual(s.sent, []);
+  assert.deepEqual(s.sent, ["composition.create"]);
   assert.deepEqual(s.loads, ["https://example.test/editor"]);
   assert.equal(s.view.hidden, true);
   assert.equal(s.page.hidden, false);

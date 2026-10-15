@@ -9,3 +9,4 @@
 - [o] P2 — P1: Corrections after the first page.
   - [o] P2.1 — P1: The plugin id is `appview`, which names no word of core, and every command, status, dom entry and event uses it.
   - [o] P2.2 — P1: `package.json` names its repository, which the workspace registry requires.
+  - [o] P2.3 — P1: The page opens the application before it creates the composition, and hides the image region without an application, because the host finishes the composition only after the first frame of a shown image region.
