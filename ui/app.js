@@ -2,18 +2,24 @@ import { createEmitter } from "./events.js";
 import { checkInput, cursor, pointer, region as regionMessages, scroll } from "./input.js";
 
 // The view is the element of the image region; the application draws it, so the view has no background of its own.
-const css = `:host{display:block;height:100%;background:transparent;position:relative}#view{position:absolute;inset:0;outline:0}`;
+const css = `:host{display:block;height:100%;background:transparent;position:relative}#view,#page{position:absolute;inset:0;outline:0}[hidden]{display:none}`;
 
 export async function mount(root, context) {
-  root.innerHTML = `<style>${css}</style><div id="view" data-expose="app.view" data-command="app.focus" tabindex="0"></div>`;
+  root.innerHTML = `<style>${css}</style><div id="view" data-expose="app.view" data-command="app.focus" tabindex="0"></div>` +
+    `<div id="page" data-expose="app.page" hidden></div>`;
   const view = root.querySelector("#view");
-  const composition = await context.composition.create({ regions: { view }, overlays: {} });
+  const page = root.querySelector("#page");
+  // The value none of the setting program states that no application is chosen; an http or https address is a web
+  // application, which a document region shows without a sidecar.
+  const setting = context.runtime.settings.read().program;
+  const program = setting === "none" ? null : setting;
+  const web = program !== null && /^https?:\/\//.test(program);
+  view.hidden = web;
+  page.hidden = !web;
+  const composition = await context.composition.create({ regions: { view, page }, overlays: {} });
   const image = composition.region("view");
   const sidecar = context.runtime.sidecar();
   const emitEvent = createEmitter(context.runtime, "app");
-  // The value none of the setting program states that no application is chosen.
-  const setting = context.runtime.settings.read().program;
-  const program = setting === "none" ? null : setting;
   let state = { program, pid: null, toolkit: null, cursor: "default", title: null, exit: null, error: null };
   const watchers = new Set();
   const changed = (fields) => { state = { ...state, ...fields }; watchers.forEach((fn) => fn(state)); };
@@ -32,6 +38,7 @@ export async function mount(root, context) {
     context.exposure.command("app.focus", async () => { await image.focus(); return null; }),
     context.exposure.command("app.input", async ({ message }) => { await send(checkInput(message)); return null; }),
     context.exposure.dom("app.view", view),
+    context.exposure.dom("app.page", page),
   ]);
   await context.exposure.delegate(root);
   await context.exposure.bind(view, "app.focus", () => ({}), { event: "pointerdown" });
@@ -72,6 +79,11 @@ export async function mount(root, context) {
     return { dispose: () => composition.dispose() };
   }
   emitEvent("info", "plugin.app.open", { program });
+  if (web) {
+    await composition.region("page").load(program);
+    context.status.report("ready");
+    return { dispose: async () => { await composition.dispose(); await context.exposure.dispose(); root.replaceChildren(); } };
+  }
   await sidecar.send(context.surfaceId, { operation: "open", command: [program] });
   context.status.report("ready");
   return {

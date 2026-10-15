@@ -13,7 +13,11 @@ function surface(program) {
     setPointerCapture() {},
     getBoundingClientRect: () => ({ left: 10, top: 20, width: 320, height: 200 }),
   };
-  const root = { set innerHTML(value) {}, querySelector: (selector) => (selector === "#view" ? view : null), replaceChildren() {} };
+  const page = { hidden: false };
+  view.hidden = false;
+  const root = { set innerHTML(value) {}, querySelector: (selector) => ({ "#view": view, "#page": page })[selector] ?? null, replaceChildren() {} };
+  const loads = [];
+  const documentRegion = { load: async (url) => { loads.push(url); } };
   const regionListeners = new Map();
   const region = { on(type, fn) { regionListeners.set(type, fn); return () => regionListeners.delete(type); }, focus: async () => { focused += 1; }, setCaret: async (rect) => { carets.push(rect); } };
   let focused = 0;
@@ -27,7 +31,7 @@ function surface(program) {
   const context = {
     surfaceId: "s1",
     runtime: { log: LOG, sidecar: () => sidecar, settings: { read: () => ({ program }), on: () => () => {} } },
-    composition: { async create() { return { region: () => region, dispose: async () => {} }; } },
+    composition: { async create() { return { region: (name) => (name === "page" ? documentRegion : region), dispose: async () => {} }; } },
     exposure: {
       status: async (name, read, subscribe) => statuses.set(name, { read, subscribe }),
       command: async (name, fn) => commands.set(name, fn), dom: async () => {}, bind: async () => {}, delegate: async () => {},
@@ -36,7 +40,7 @@ function surface(program) {
     status: { report: (phase, error) => reports.push([phase, error?.message]) },
   };
   return {
-    context, root, view, sent, statuses, commands, reports, carets,
+    context, root, view, page, loads, sent, statuses, commands, reports, carets,
     focused: () => focused,
     fire: (type, event) => listeners.get(type).forEach((fn) => fn({ preventDefault() {}, ...event })),
     region: (type, event) => regionListeners.get(type)(event),
@@ -127,4 +131,24 @@ test("app.focus focuses the region and app.input sends one embed input message",
   await s.commands.get("app.input")({ message });
   assert.deepEqual(s.sent.at(-1), { operation: "input", message });
   await assert.rejects(s.commands.get("app.input")({ message: { type: "end" } }), /app.input: end is not an input message/);
+});
+
+test("a program that is a web address is shown in the document region and starts no sidecar", async () => {
+  const s = surface("https://example.test/editor");
+  const { mount } = await import("../ui/app.js");
+  await mount(s.root, s.context);
+  assert.deepEqual(s.sent, []);
+  assert.deepEqual(s.loads, ["https://example.test/editor"]);
+  assert.equal(s.view.hidden, true);
+  assert.equal(s.page.hidden, false);
+  assert.deepEqual(s.reports, [["ready", undefined]]);
+});
+
+test("a program that is a path hides the document region", async () => {
+  const s = surface("/opt/editor");
+  const { mount } = await import("../ui/app.js");
+  await mount(s.root, s.context);
+  assert.equal(s.page.hidden, true);
+  assert.equal(s.view.hidden, false);
+  assert.deepEqual(s.loads, []);
 });
