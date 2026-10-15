@@ -1,11 +1,11 @@
 {
-  "id": "app",
+  "id": "appview",
   "name": "애플리케이션",
   "description": "embed protocol을 말하는 애플리케이션을 카드 안에 띄운다. 애플리케이션은 공유 버퍼에 그리고 카드의 입력을 받는다.",
   "mark": "▣",
   "icon": "<rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M2 6h12\"/>",
   "surface": {
-    "module": "ui/app.js",
+    "module": "ui/appview.js",
     "composition": {
       "kind": "hybrid",
       "regions": [
@@ -43,7 +43,7 @@
   "exposes": {
     "status": [
       {
-        "name": "app.state",
+        "name": "appview.state",
         "description": "The application of the surface: the program, its process, the toolkit it named when it connected, the cursor it set, its title, its exit, and the last error, each null until it is known.",
         "schema": {
           "type": "object",
@@ -93,7 +93,7 @@
     ],
     "commands": [
       {
-        "name": "app.focus",
+        "name": "appview.focus",
         "description": "Transfers keyboard ownership to the image region of the application.",
         "params": {
           "type": "object",
@@ -104,7 +104,7 @@
         }
       },
       {
-        "name": "app.input",
+        "name": "appview.input",
         "description": "Sends one input message of the embed protocol (key, compose, commit, pointer, scroll or focus) to the application.",
         "params": {
           "type": "object",
@@ -121,11 +121,11 @@
     ],
     "dom": [
       {
-        "name": "app.view",
+        "name": "appview.view",
         "description": "The area that shows the application."
       },
       {
-        "name": "app.page",
+        "name": "appview.page",
         "description": "The document area that shows a web application."
       }
     ]

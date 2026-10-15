@@ -1,5 +1,5 @@
 {
-  "name": "@soksak/plugin-app",
+  "name": "@soksak/plugin-appview",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -12,7 +12,7 @@
   "files": [
     "plugin.json",
     "events.json",
-    "ui/app.js",
+    "ui/appview.js",
     "ui/input.js",
     "ui/events.js"
   ],

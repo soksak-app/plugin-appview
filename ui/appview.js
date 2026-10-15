@@ -5,8 +5,8 @@ import { checkInput, cursor, pointer, region as regionMessages, scroll } from ".
 const css = `:host{display:block;height:100%;background:transparent;position:relative}#view,#page{position:absolute;inset:0;outline:0}[hidden]{display:none}`;
 
 export async function mount(root, context) {
-  root.innerHTML = `<style>${css}</style><div id="view" data-expose="app.view" data-command="app.focus" tabindex="0"></div>` +
-    `<div id="page" data-expose="app.page" hidden></div>`;
+  root.innerHTML = `<style>${css}</style><div id="view" data-expose="appview.view" data-command="appview.focus" tabindex="0"></div>` +
+    `<div id="page" data-expose="appview.page" hidden></div>`;
   const view = root.querySelector("#view");
   const page = root.querySelector("#page");
   // The value none of the setting program states that no application is chosen; an http or https address is a web
@@ -19,29 +19,29 @@ export async function mount(root, context) {
   const composition = await context.composition.create({ regions: { view, page }, overlays: {} });
   const image = composition.region("view");
   const sidecar = context.runtime.sidecar();
-  const emitEvent = createEmitter(context.runtime, "app");
+  const emitEvent = createEmitter(context.runtime, "appview");
   let state = { program, pid: null, toolkit: null, cursor: "default", title: null, exit: null, error: null };
   const watchers = new Set();
   const changed = (fields) => { state = { ...state, ...fields }; watchers.forEach((fn) => fn(state)); };
   const report = (text) => {
     changed({ error: text });
-    emitEvent("warn", "plugin.app.error", { error: text });
+    emitEvent("warn", "plugin.appview.error", { error: text });
     context.status.report("error", new Error(text));
   };
   let inputs = 0;
   const send = (message) => {
-    emitEvent("trace", "plugin.app.input", { type: message.type });
+    emitEvent("trace", "plugin.appview.input", { type: message.type });
     return sidecar.send(context.surfaceId, { operation: "input", message }).catch((error) => report(`input: ${error.message}`));
   };
   await Promise.all([
-    context.exposure.status("app.state", () => state, (fn) => { watchers.add(fn); return () => watchers.delete(fn); }),
-    context.exposure.command("app.focus", async () => { await image.focus(); return null; }),
-    context.exposure.command("app.input", async ({ message }) => { await send(checkInput(message)); return null; }),
-    context.exposure.dom("app.view", view),
-    context.exposure.dom("app.page", page),
+    context.exposure.status("appview.state", () => state, (fn) => { watchers.add(fn); return () => watchers.delete(fn); }),
+    context.exposure.command("appview.focus", async () => { await image.focus(); return null; }),
+    context.exposure.command("appview.input", async ({ message }) => { await send(checkInput(message)); return null; }),
+    context.exposure.dom("appview.view", view),
+    context.exposure.dom("appview.page", page),
   ]);
   await context.exposure.delegate(root);
-  await context.exposure.bind(view, "app.focus", () => ({}), { event: "pointerdown" });
+  await context.exposure.bind(view, "appview.focus", () => ({}), { event: "pointerdown" });
   const rect = () => view.getBoundingClientRect();
   for (const [type, phase] of [["pointerdown", "down"], ["pointermove", "move"], ["pointerup", "up"]]) {
     view.addEventListener(type, (event) => {
@@ -55,7 +55,7 @@ export async function mount(root, context) {
   }
   image.on("error", (event) => report(`native image: ${event.reason}`));
   await sidecar.on(context.surfaceId, (body) => {
-    emitEvent("debug", "plugin.app.message", { event: body.event ?? "error" });
+    emitEvent("debug", "plugin.appview.message", { event: body.event ?? "error" });
     if (body.error !== undefined) return report(body.error);
     if (body.event === "started") return changed({ pid: body.pid, exit: null });
     if (body.event === "connected") return changed({ toolkit: body.toolkit });
@@ -78,7 +78,7 @@ export async function mount(root, context) {
     report("the setting program names no application");
     return { dispose: () => composition.dispose() };
   }
-  emitEvent("info", "plugin.app.open", { program });
+  emitEvent("info", "plugin.appview.open", { program });
   if (web) {
     await composition.region("page").load(program);
     context.status.report("ready");

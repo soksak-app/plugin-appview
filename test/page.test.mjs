@@ -52,16 +52,16 @@ const settle = () => new Promise((resolve) => setImmediate(resolve));
 
 test("the page opens the program of its settings and reports ready", async () => {
   const s = surface("/opt/editor");
-  const { mount } = await import("../ui/app.js");
+  const { mount } = await import("../ui/appview.js");
   await mount(s.root, s.context);
   assert.deepEqual(s.sent, [{ operation: "open", command: ["/opt/editor"] }]);
   assert.deepEqual(s.reports, [["ready", undefined]]);
-  assert.equal(s.statuses.get("app.state").read().program, "/opt/editor");
+  assert.equal(s.statuses.get("appview.state").read().program, "/opt/editor");
 });
 
 test("a page without a program reports the missing setting as an error", async () => {
   const s = surface("none");
-  const { mount } = await import("../ui/app.js");
+  const { mount } = await import("../ui/appview.js");
   await mount(s.root, s.context);
   assert.deepEqual(s.sent, []);
   assert.deepEqual(s.reports, [["error", "the setting program names no application"]]);
@@ -69,7 +69,7 @@ test("a page without a program reports the missing setting as an error", async (
 
 test("pointer and wheel events of the view become embed input in points of the region", async () => {
   const s = surface("/opt/editor");
-  const { mount } = await import("../ui/app.js");
+  const { mount } = await import("../ui/appview.js");
   await mount(s.root, s.context);
   s.fire("pointerdown", { clientX: 40, clientY: 70, button: 0, buttons: 1, pointerId: 1, shiftKey: true, altKey: false, ctrlKey: false, metaKey: false });
   s.fire("pointermove", { clientX: 41, clientY: 72, button: -1, buttons: 1, pointerId: 1, shiftKey: false, altKey: false, ctrlKey: false, metaKey: false });
@@ -82,12 +82,12 @@ test("pointer and wheel events of the view become embed input in points of the r
   assert.equal(messages[2].phase, "up");
   assert.deepEqual(messages[2].buttons, []);
   assert.deepEqual(messages[3], { type: "scroll", x: 40, y: 40, dx: 0, dy: -12, precise: true, input: 4 });
-  assert.equal(s.focused(), 0, "a press passes through without moving the keyboard; app.focus moves it");
+  assert.equal(s.focused(), 0, "a press passes through without moving the keyboard; appview.focus moves it");
 });
 
 test("region keyboard events become embed key, commit, compose and focus messages", async () => {
   const s = surface("/opt/editor");
-  const { mount } = await import("../ui/app.js");
+  const { mount } = await import("../ui/appview.js");
   await mount(s.root, s.context);
   await s.region("key", { key: "ArrowLeft", shift: false, alt: true, ctrl: false });
   await s.region("insert", { text: "한" });
@@ -105,7 +105,7 @@ test("region keyboard events become embed key, commit, compose and focus message
 
 test("messages of the sidecar set the cursor, the caret and the state, and errors are reported", async () => {
   const s = surface("/opt/editor");
-  const { mount } = await import("../ui/app.js");
+  const { mount } = await import("../ui/appview.js");
   await mount(s.root, s.context);
   s.message({ event: "started", pid: 42 });
   s.message({ event: "connected", toolkit: "slint" });
@@ -117,25 +117,25 @@ test("messages of the sidecar set the cursor, the caret and the state, and error
   await settle();
   assert.equal(s.view.style.cursor, "ew-resize");
   assert.deepEqual(s.carets, [{ x: 1, y: 2, width: 3, height: 4 }]);
-  assert.deepEqual(s.statuses.get("app.state").read(), { program: "/opt/editor", pid: 42, toolkit: "slint", cursor: "resize-ew", title: "project", exit: "exit status 0", error: "the host refused frame 3 of the region view: size" });
+  assert.deepEqual(s.statuses.get("appview.state").read(), { program: "/opt/editor", pid: 42, toolkit: "slint", cursor: "resize-ew", title: "project", exit: "exit status 0", error: "the host refused frame 3 of the region view: size" });
   assert.deepEqual(s.reports.at(-1), ["error", "the host refused frame 3 of the region view: size"]);
 });
 
-test("app.focus focuses the region and app.input sends one embed input message", async () => {
+test("appview.focus focuses the region and appview.input sends one embed input message", async () => {
   const s = surface("/opt/editor");
-  const { mount } = await import("../ui/app.js");
+  const { mount } = await import("../ui/appview.js");
   await mount(s.root, s.context);
-  await s.commands.get("app.focus")({});
+  await s.commands.get("appview.focus")({});
   assert.equal(s.focused(), 1);
   const message = { type: "commit", text: "a" };
-  await s.commands.get("app.input")({ message });
+  await s.commands.get("appview.input")({ message });
   assert.deepEqual(s.sent.at(-1), { operation: "input", message });
-  await assert.rejects(s.commands.get("app.input")({ message: { type: "end" } }), /app.input: end is not an input message/);
+  await assert.rejects(s.commands.get("appview.input")({ message: { type: "end" } }), /appview.input: end is not an input message/);
 });
 
 test("a program that is a web address is shown in the document region and starts no sidecar", async () => {
   const s = surface("https://example.test/editor");
-  const { mount } = await import("../ui/app.js");
+  const { mount } = await import("../ui/appview.js");
   await mount(s.root, s.context);
   assert.deepEqual(s.sent, []);
   assert.deepEqual(s.loads, ["https://example.test/editor"]);
@@ -146,7 +146,7 @@ test("a program that is a web address is shown in the document region and starts
 
 test("a program that is a path hides the document region", async () => {
   const s = surface("/opt/editor");
-  const { mount } = await import("../ui/app.js");
+  const { mount } = await import("../ui/appview.js");
   await mount(s.root, s.context);
   assert.equal(s.page.hidden, true);
   assert.equal(s.view.hidden, false);
