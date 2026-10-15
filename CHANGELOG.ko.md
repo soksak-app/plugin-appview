@@ -2,6 +2,10 @@
 
 [English](CHANGELOG.md)
 
+## Unreleased
+
+- P7: plugin은 퇴역한다. embed page는 core 0.0.16부터 `@soksak/plugin-api`의 `mountApplication`이고, registry가 appview 0.0.2를 철회한다.
+
 ## 0.0.2
 
 - P5.2: core 0.0.15를 요구하고 공유 embed page를 주는 버전 0.0.2. P4.2를 완료한다.

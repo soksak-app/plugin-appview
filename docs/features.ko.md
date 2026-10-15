@@ -19,3 +19,4 @@
   - [o] P5.1 — P1: `ui/appview.js`가 `mount(root, context, { application })`을 내보낸다. 그것은 그 id의 연결된 애플리케이션을 연결 plugin composition의 image region `view`에서 시작하고, status, 명령, dom 항목, event는 그 plugin의 id로 이름한다. 설정 `program`, 웹 경로, 문서 region은 없어지고, manifest는 module `surface`, `input`, `events`를 가진 `extends.surface`만 선언한다.
   - [o] P5.2 — P1: surface 없는 제공자를 받는 core 0.0.15의 `@soksak/plugin-api`로 0.0.2를 release한다. 이것이 P4.2를 완료한다.
 - [o] P6 — P2: release 경로: release workflow가 tag마다 core의 sok로 plugin을 묶고, ci workflow가 `make test`와 commit message 검사를 실행한다.
+- [o] P7 — P1: 퇴역: embed page는 core 0.0.16부터 `@soksak/plugin-api`의 `mountApplication`이고, 각 연결 plugin이 자기 surface에 mount한다. registry가 appview 0.0.2를 철회하고 저장소는 보관된다.

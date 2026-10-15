@@ -2,6 +2,10 @@
 
 [한국어](CHANGELOG.ko.md)
 
+## Unreleased
+
+- P7: the plugin is retired; the embed page is `mountApplication` of `@soksak/plugin-api` from core 0.0.16, and the registry revokes appview 0.0.2.
+
 ## 0.0.2
 
 - P5.2: version 0.0.2, which requires core 0.0.15 and provides the shared embed page; it completes P4.2.
